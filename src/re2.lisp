@@ -83,12 +83,12 @@ which matters when the pattern itself is attacker supplied.")
               names))))
 
 (defun unicode-script (char)
-  #+sbcl (sb-unicode:script char)
+  #+sbcl (symbol-name (sb-unicode:script char))
   #-sbcl (string-upcase (cl-unicode:script char))
   )
 
 (defun unicode-general-category (char)
-  #+sbcl (sb-unicode:general-category char)
+  #+sbcl (symbol-name (sb-unicode:general-category char))
   #-sbcl (string-upcase (cl-unicode:general-category char))
   )
 
