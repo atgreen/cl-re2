@@ -6,7 +6,7 @@
   :author "Anthony Green <green@moxielogic.com>"
   :license "MIT"
   :version "0.1.0"
-  :depends-on ("cl-ppcre")
+  :depends-on ("cl-ppcre" #-sbcl "cl-unicode")
   :serial t
   :components ((:module "src" :components ((:file "package") (:file "re2"))))
   :in-order-to ((test-op (test-op "cl-re2/tests"))))
