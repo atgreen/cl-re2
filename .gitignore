@@ -1,7 +1,8 @@
+*.fasl
+*.dx64fsl
+.cache/
+.beads.gate.lock
 
-# Beads / Dolt files (added by bd init)
-.dolt/
-*.db
-.beads-credential-key
-.beads/proxieddb/
-*.gate.lock*
+# ocicl-managed dependencies (not part of the library)
+/ocicl.csv
+/ocicl/
