@@ -77,8 +77,20 @@ which matters when the pattern itself is attacker supplied.")
       (setf *re2-script-names*
             (let ((names (make-hash-table :test #'equal)))
               (loop for code from 0 below char-code-limit by 16
-                    do (setf (gethash (symbol-name (sb-unicode:script (code-char code))) names) t))
+                    for char = (code-char code)
+                    #-sbcl when #-sbcl char
+                    do (setf (gethash (unicode-script char) names) t))
               names))))
+
+(defun unicode-script (char)
+  #+sbcl (symbol-name (sb-unicode:script char))
+  #-sbcl (string-upcase (cl-unicode:script char))
+  )
+
+(defun unicode-general-category (char)
+  #+sbcl (symbol-name (sb-unicode:general-category char))
+  #-sbcl (string-upcase (cl-unicode:general-category char))
+  )
 
 (defun re2-unicode-predicate (pattern name)
   "Return the membership test of the Unicode category or script NAME, as \\p{NAME} means."
@@ -94,10 +106,10 @@ which matters when the pattern itself is attacker supplied.")
        (if (= 1 (length name))
            (let ((initial (char upper 0)))
              (lambda (code)
-               (char= initial (char (symbol-name (sb-unicode:general-category (code-char code))) 0))))
-           (lambda (code) (equal upper (symbol-name (sb-unicode:general-category (code-char code)))))))
+               (char= initial (char (unicode-general-category (code-char code)) 0))))
+           (lambda (code) (equal upper (unicode-general-category (code-char code))))))
       ((gethash upper (re2-script-names))
-       (lambda (code) (equal upper (symbol-name (sb-unicode:script (code-char code))))))
+       (lambda (code) (equal upper (unicode-script (code-char code)))))
       (t (re2-error pattern "invalid character class range: `\\p{~A}`" name)))))
 
 ;;; Parsing produces a tree of (:char code fold), (:any newline), (:class class fold),
@@ -628,7 +640,7 @@ keeps the matcher reentrant -- many threads may run the same program at once."
           (declare (ignorable matchers))
           (lambda (text start)
             (declare (optimize (speed 3) (safety 0) (debug 0))
-                     (sb-ext:muffle-conditions sb-ext:compiler-note style-warning)
+                     #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note style-warning)
                      (type simple-string text) (type fixnum start))
             (let* ((length (length text))
                    (visited (make-array ,size :element-type 'fixnum :initial-element -1))
@@ -677,7 +689,7 @@ keeps the matcher reentrant -- many threads may run the same program at once."
   "Test whether PROGRAM matches anywhere in TEXT."
   (and (re2-search program text) t))
 
-(defvar *re2-compiled* (make-hash-table :test #'equal :synchronized t)
+(defvar *re2-compiled* (make-hash-table :test #'equal . #+sbcl (:synchronized t) #-sbcl ())
   "Patterns already compiled, as validation reads the same few over and over.")
 
 (defun re2-compiled (pattern)
